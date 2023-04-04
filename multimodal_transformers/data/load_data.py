@@ -108,7 +108,7 @@ def load_data_into_folds(
         train_df = folds_df.copy().iloc[train_index]
         test_df = folds_df.copy().iloc[test_index]
 
-        train, val, test = load_train_val_test_helper(
+        train, val, test, _, _ = load_train_val_test_helper(
             train_df,
             val_df.copy(),
             test_df,
@@ -203,10 +203,10 @@ def load_data_from_folder(
             training, validation and testing sets. The val dataset is :obj:`None` if
             there is no `val.csv` in folder_path
     """
-    train_df = pd.read_csv(join(folder_path, "train.csv"), index_col=0)
-    test_df = pd.read_csv(join(folder_path, "test.csv"), index_col=0)
-    if exists(join(folder_path, "val.csv")):
-        val_df = pd.read_csv(join(folder_path, "val.csv"), index_col=0)
+    train_df = pd.read_pickle(join(folder_path, 'train.gz'))
+    test_df = pd.read_pickle(join(folder_path, 'test.gz'))
+    if exists(join(folder_path, 'val.gz')):
+        val_df = pd.read_pickle(join(folder_path, 'val.gz'))
     else:
         val_df = None
 
@@ -250,6 +250,12 @@ def load_train_val_test_helper(
     debug=False,
     debug_dataset_size=100,
 ):
+    if categorical_cols is None or len(categorical_cols) == 0:
+        categorical_encode_type = None
+    if numerical_cols is None or len(numerical_cols) == 0:
+        numerical_transformer_method = 'none'
+
+    cat_feat_processor = None
     if categorical_encode_type == "ohe" or categorical_encode_type == "binary":
         dfs = [df for df in [train_df, val_df, test_df] if df is not None]
         data_df = pd.concat(dfs, axis=0)
@@ -258,7 +264,7 @@ def load_train_val_test_helper(
         )
         vals = cat_feat_processor.fit_transform()
         cat_df = pd.DataFrame(vals, columns=cat_feat_processor.feat_names)
-        data_df = pd.concat([data_df, cat_df], axis=1)
+        data_df = pd.concat([data_df.reset_index(), cat_df], axis=1)
         categorical_cols = cat_feat_processor.feat_names
 
         len_train = len(train_df)
@@ -345,7 +351,7 @@ def load_train_val_test_helper(
     else:
         val_dataset = None
 
-    return train_dataset, val_dataset, test_dataset
+    return train_dataset, val_dataset, test_dataset, cat_feat_processor, numerical_transformer
 
 
 def load_data(

@@ -51,9 +51,8 @@ class TorchTabularTextDataset(TorchDataset):
 
     def __getitem__(self, idx):
         item = {key: torch.tensor(val[idx]) for key, val in self.encodings.items()}
-        item["labels"] = (
-            torch.tensor(self.labels[idx]) if self.labels is not None else None
-        )
+        if self.labels is not None:
+            item["labels"] = torch.tensor(self.labels[idx])
         item["cat_feats"] = (
             torch.tensor(self.cat_feats[idx]).float()
             if self.cat_feats is not None
@@ -67,7 +66,9 @@ class TorchTabularTextDataset(TorchDataset):
         return item
 
     def __len__(self):
-        return len(self.labels)
+        if self.labels is not None:
+            return len(self.labels)
+        return len(self.encodings['input_ids'])
 
     def get_labels(self):
         """returns the label names for classification"""

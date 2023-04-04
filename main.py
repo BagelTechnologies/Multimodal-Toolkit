@@ -137,20 +137,10 @@ def main():
 
     def build_compute_metrics_fn(task_name: str) -> Callable[[EvalPrediction], Dict]:
         def compute_metrics_fn(p: EvalPrediction):
-            # p.predictions is now a list of objects
-            # The first entry is the actual predictions
-            predictions = p.predictions[0]
             if task_name == "classification":
-                preds_labels = np.argmax(predictions, axis=1)
-                if predictions.shape[-1] == 2:
-                    pred_scores = softmax(predictions, axis=1)[:, 1]
-                else:
-                    pred_scores = softmax(predictions, axis=1)
-                return calc_classification_metrics(
-                    pred_scores, preds_labels, p.label_ids
-                )
+                return calc_classification_metrics(p.predictions, p.label_ids)
             elif task_name == "regression":
-                preds = np.squeeze(predictions)
+                preds = np.squeeze(p.predictions)
                 return calc_regression_metrics(preds, p.label_ids)
             else:
                 return {}

@@ -67,10 +67,10 @@ class CategoricalFeatures:
         return np.concatenate(vals, axis=1)
 
     def _one_hot(self):
-        ohe = preprocessing.OneHotEncoder(sparse=False)
-        ohe.fit(self.df[self.cat_feats].values)
-        self.feat_names = list(ohe.get_feature_names_out(self.cat_feats))
-        return ohe.transform(self.df[self.cat_feats].values)
+        self.ohe = preprocessing.OneHotEncoder(sparse=False, handle_unknown='ignore')
+        self.ohe.fit(self.df[self.cat_feats].values)
+        self.feat_names = list(self.ohe.get_feature_names(self.cat_feats))
+        return self.ohe.transform(self.df[self.cat_feats].values)
 
     def fit_transform(self):
         if self.enc_type == "label":
@@ -105,10 +105,13 @@ class CategoricalFeatures:
             return dataframe
 
         elif self.enc_type == "ohe":
-            return self.ohe(dataframe[self.cat_feats].values)
+            return self.ohe.transform(dataframe[self.cat_feats].values)
 
         else:
             raise Exception("Encoding type not understood")
+
+    def get_ohe(self):
+        return self.ohe
 
 
 def normalize_numerical_feats(numerical_feats, transformer=None):
@@ -140,8 +143,8 @@ def agg_text_columns_func(empty_row_values, replace_text, texts):
     return processed_texts
 
 
-def load_cat_and_num_feats(df, cat_bool_func, num_bool_func, enocde_type=None):
-    cat_feats = load_cat_feats(df, cat_bool_func, enocde_type)
+def load_cat_and_num_feats(df, cat_bool_func, num_bool_func, encode_type=None):
+    cat_feats = load_cat_feats(df, cat_bool_func, encode_type)
     num_feats = load_num_feats(df, num_bool_func)
     return cat_feats, num_feats
 
