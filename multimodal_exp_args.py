@@ -4,7 +4,8 @@ import logging
 from typing import Optional, Tuple, List
 
 import torch
-from transformers.training_args import TrainingArguments, requires_backends, cached_property
+from transformers.training_args import TrainingArguments, cached_property
+from transformers.utils import requires_backends
 
 
 logger = logging.getLogger(__name__)

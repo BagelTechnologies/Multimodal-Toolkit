@@ -51,3 +51,13 @@ def sorted_nicely(l, reverse=False):
     if reverse:
         rtn = reversed(rtn)
     return rtn
+
+
+def replace_col_wildcards(cols, possible_cols):
+    replaced_wildcards_cols = []
+    for col in cols:
+        if col.endswith('*'):
+            replaced_wildcards_cols = replaced_wildcards_cols + [data_col for data_col in possible_cols if str(data_col).startswith(col[:-1])]
+        else:
+            replaced_wildcards_cols.append(col)
+    return replaced_wildcards_cols

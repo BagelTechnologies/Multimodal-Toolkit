@@ -1,0 +1,30 @@
+{
+  "DATA-AGRS":
+  {
+    "TEXT-COLS" : ["title", "description"],
+    "CAT-COLS" : [],
+    "NUMERICAL-COLS" : [],
+    "LABEL-COL" : "component",
+    "DATA-SPLIT-PATH" : "./logs/data_split/",
+    "DATA-DF-PATH" : "",
+    "TRAIN-VAL-SPLIT-FRACTIONS" : [0.8, 0.9],
+    "CAT-NUM-PREPROCESS-FILENAME" : "cat_num_transformers.gz"
+  },
+  "MODEL-ARGS":
+  {
+    "MODEL-NAME" : "bert-base-uncased"
+  },
+  "MULTIMODAL-ARGS":
+  {
+    "COMBINE-FEAT-METHOD" : "text_only"
+  },
+  "TRAINING-ARGS":
+  {
+    "OUTPUT-DIR" : "./logs/model_name",
+    "LOGGING-DIR" : "./logs/runs",
+    "PER-DEVICE-BATCH-SIZE" : 8,
+    "EPOCH-SIZE" : 10,
+    "LEARNING-RATE" : 1e-4,
+    "FREEZE-LAYERS" : []
+  }
+}
