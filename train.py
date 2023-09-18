@@ -33,6 +33,7 @@ os.environ['COMET_MODE'] = 'DISABLED'
 with open('config.json', 'r') as j:
     config = json.loads(j.read())
 
+BEST_MODEL_DIR = os.path.join(config["TRAINING-ARGS"]["OUTPUT-DIR"], "best_model")
 label_col = config["DATA-AGRS"]["LABEL-COL"]
 data_df = pd.read_pickle(config["DATA-AGRS"]["DATA-DF-PATH"])
 labels_list = list(np.sort(data_df[label_col].unique()))
@@ -87,12 +88,14 @@ training_args = TrainingArguments(
     do_eval=True,
     per_device_train_batch_size=config["TRAINING-ARGS"]["PER-DEVICE-BATCH-SIZE"],
     num_train_epochs=config["TRAINING-ARGS"]["EPOCH-SIZE"],
-    logging_steps=25,
-    eval_steps=500,
-    evaluation_strategy='epoch',
-    save_steps=25,
-    save_strategy='steps',
-    learning_rate=config["TRAINING-ARGS"]["LEARNING-RATE"]
+    evaluation_strategy="epoch",
+    logging_strategy="steps",
+    logging_steps=50,
+    save_strategy="epoch",
+    metric_for_best_model="acc",
+    greater_is_better=True,
+    load_best_model_at_end=True,
+    report_to=["none"]
 )
 
 set_seed(training_args.seed)
@@ -172,3 +175,6 @@ trainer = Trainer(
 )
 
 trainer.train()
+
+# Save the best model to a specified directory
+trainer.save_model(BEST_MODEL_DIR)
