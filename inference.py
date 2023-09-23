@@ -2,6 +2,7 @@ import pickle
 import pandas as pd
 import numpy as np
 import json
+import os
 import torch
 from torch import nn
 from sklearn import metrics
@@ -19,16 +20,14 @@ class MultimodalLoader:
             multimodal_config = json.loads(j.read())
 
         with open(cat_num_transformers_path, 'rb') as f:
-            [labels_list, text_cols,
-             cat_cols, cat_feat_dim, cat_transformer,
-             numerical_cols, numerical_feat_dim, numerical_transformer] = pickle.load(f)
+            classifier_info = pickle.load(f)
 
-        self.text_cols = text_cols
-        self.cat_cols = cat_cols
-        self.numerical_cols = numerical_cols
-        self.cat_transformer = cat_transformer
-        self.numerical_transformer = numerical_transformer
-        self.labels_list = labels_list
+        self.text_cols = classifier_info['text_cols']
+        self.cat_cols = classifier_info['cat_cols']
+        self.numerical_cols = classifier_info['num_cols']
+        self.cat_transformer = classifier_info['cat_transformer']
+        self.numerical_transformer = classifier_info['numerical_transformer']
+        self.labels_list = classifier_info['labels_list']
 
         self.label_col = multimodal_config["DATA-AGRS"]["LABEL-COL"]
         column_info_dict = {
@@ -50,8 +49,8 @@ class MultimodalLoader:
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
         config = AutoConfig.from_pretrained(model_name)
         tabular_config = multimodal_transformers_model.TabularConfig(num_labels=len(self.labels_list),
-                                                                      cat_feat_dim=cat_feat_dim,
-                                                                      numerical_feat_dim=numerical_feat_dim,
+                                                                      cat_feat_dim=classifier_info['cat_feat_dim'],
+                                                                      numerical_feat_dim=classifier_info['numerical_feat_dim'],
                                                                       **vars(data_args))
         config.tabular_config = tabular_config
         self.model = multimodal_transformers_model.AutoModelWithTabular.from_pretrained(model_name, config=config)
@@ -67,6 +66,7 @@ class MultimodalLoader:
             self.model = self.model.to(self.device)
 
     def infer(self, df):
+        df.fillna('', inplace=True)
         text_list = list(df[self.text_cols].agg(f' {self.tokenizer.sep_token} '.join, axis=1))
         text_inputs = self.tokenizer(text_list, padding=True, truncation=True)
         cat_feats = self.cat_transformer.transform(df[self.cat_cols].values) \
@@ -95,8 +95,10 @@ if __name__ == '__main__':
 
     data_path = config["DATA-AGRS"]["DATA-SPLIT-PATH"]
     test_df = pd.read_pickle(data_path + "test.gz")
-    model_path = "logs/model_name/checkpoint-100/pytorch_model.bin"
     cat_num_transformers_path = data_path + config["DATA-AGRS"]["CAT-NUM-PREPROCESS-FILENAME"]
+    OUTPUT_DIR = config["TRAINING-ARGS"]["OUTPUT-DIR"]
+    model_path = os.path.join(OUTPUT_DIR, "best_model", "pytorch_model.bin")
+    print(model_path)
     mm_loader = MultimodalLoader(config_path, model_path, cat_num_transformers_path)
     model_output = mm_loader.infer(test_df)
 
@@ -104,4 +106,3 @@ if __name__ == '__main__':
     target_labels = list(labels_np[list(test_df[config["DATA-AGRS"]["LABEL-COL"]])])
     pred_labels = list(labels_np[model_output.argmax(axis=1)])
     print(metrics.classification_report(target_labels, pred_labels, digits=3, zero_division=1))
-    

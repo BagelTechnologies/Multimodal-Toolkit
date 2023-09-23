@@ -4,10 +4,10 @@
     "TEXT-COLS" : ["title", "description"],
     "CAT-COLS" : [],
     "NUMERICAL-COLS" : [],
-    "LABEL-COL" : "component",
+    "LABEL-COL" : "label",
     "DATA-SPLIT-PATH" : "./logs/data_split/",
     "DATA-DF-PATH" : "",
-    "TRAIN-VAL-SPLIT-FRACTIONS" : [0.8, 0.9],
+    "DATA-SPLIT-FRACTIONS" : [0.8, 0.1, 0.1],
     "CAT-NUM-PREPROCESS-FILENAME" : "cat_num_transformers.gz"
   },
   "MODEL-ARGS":
